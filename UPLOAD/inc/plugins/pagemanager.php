@@ -99,10 +99,13 @@ function pagemanager_install()
 			`url` varchar(30) NOT NULL default '',
 			`groups` text NOT NULL,
 			`framework` int(1) NOT NULL default '0',
-			`template` text NOT NULL,
+			`template` mediumtext NOT NULL,
 			`online` int(1) NOT NULL default '1',
 			`enabled` int(1) NOT NULL default '1',
 			`dateline` bigint(30) NOT NULL default '0',
+			`url_next_page` varchar(30) NOT NULL default '',
+			`url_prev_page` varchar(30) NOT NULL default '',
+			`url_toc_page` varchar(30) NOT NULL default '',
 			PRIMARY KEY (`pid`),
 			UNIQUE KEY `url` (`url`)
 			) ENGINE=MyISAM".$db->build_create_table_collation()
@@ -468,7 +471,10 @@ function pagemanager_admin()
 					'template'	=>	$db->escape_string($form_array['template']),
 					'online'	=>	$form_array['online'],
 					'enabled'	=>	$form_array['enabled'],
-					'dateline'	=>	TIME_NOW
+					'dateline'	=>	TIME_NOW,					
+					'url_next_page' =>      $db->escape_string($form_array['url_next_page']),
+					'url_prev_page' =>      $db->escape_string($form_array['url_prev_page']),
+					'url_toc_page'  =>      $db->escape_string($form_array['url_toc_page'])
 				);
 				$db->insert_query('pages',$updated_page);
 				$query = $db->simple_select('pages','*','url="'.$db->escape_string($form_array['url']).'"');
@@ -576,6 +582,12 @@ function pagemanager_admin()
 		$form_container->output_row($lang->pagemanager_edit_form_template.' <em>*</em>',$lang->pagemanager_edit_form_template_description,$form->generate_text_area('template',$form_array['template'],array('id'=>'template','style'=>'width:100%;height:500px;')), 'template');
 		$form_container->output_row($lang->pagemanager_edit_form_online,$lang->pagemanager_edit_form_online_description,$form->generate_yes_no_radio('online',$form_array['online']));
 		$form_container->output_row($lang->pagemanager_edit_form_enable,$lang->pagemanager_edit_form_enable_description,$form->generate_yes_no_radio('enabled',$form_array['enabled']));
+		
+		$form_container->output_row($lang->pagemanager_edit_form_url_prev_page,$lang->pagemanager_edit_form_url_prev_page_description,$form->generate_text_box('url_prev_page',$form_array['url_prev_page'],array('id'=>'url_prev_page')), 'url_prev_page');
+		$form_container->output_row($lang->pagemanager_edit_form_url_next_page,$lang->pagemanager_edit_form_url_next_page_description,$form->generate_text_box('url_next_page',$form_array['url_next_page'],array('id'=>'url_next_page')), 'url_next_page');
+		$form_container->output_row($lang->pagemanager_edit_form_url_toc_page,$lang->pagemanager_edit_form_url_toc_page_description,$form->generate_text_box('url_toc_page',$form_array['url_toc_page'],array('id'=>'url_toc_page')), 'url_toc_page');
+		
+		
 		$form_container->end();
 		$buttons[] = $form->generate_submit_button($lang->pagemanager_edit_form_close);
 		$form->output_submit_wrapper($buttons);
@@ -684,7 +696,7 @@ function pagemanager_admin()
 				{
 					$selected_groups = '-1';
 				}				
-				if($form_array['name'] == $pages['name'] && $form_array['url'] == $pages['url'] && 	$form_array['framework'] == $pages['framework'] && $form_array['template'] == $pages['template'] && $form_array['online'] == $pages['online'] && $pages['groups'] == $selected_groups)
+				if($form_array['name'] == $pages['name'] && $form_array['url'] == $pages['url'] && $form_array['framework'] == $pages['framework'] && $form_array['template'] == $pages['template'] && $form_array['online'] == $pages['online'] && $pages['groups'] == $selected_groups && $form_array['url_next_page'] == $pages['url_next_page'] && $form_array['url_prev_page'] == $pages['url_prev_page'] && $form_array['url_toc_page'] == $pages['url_toc_page'] )
 				{
 					$modified = $pages['dateline'];
 					if($form_array['enabled'] == $pages['enabled'])
@@ -717,7 +729,10 @@ function pagemanager_admin()
 					'template'	=>	$db->escape_string($form_array['template']),
 					'online'	=>	$form_array['online'],
 					'enabled'	=>	$form_array['enabled'],
-					'dateline'	=>	$modified
+					'dateline'	=>	$modified,
+					'url_next_page' =>      $db->escape_string($form_array['url_next_page']),
+					'url_prev_page' =>      $db->escape_string($form_array['url_prev_page']),
+					'url_toc_page'  =>      $db->escape_string($form_array['url_toc_page'])
 				);
 				$db->update_query('pages',$updated_page,'pid='.$pages['pid']);
 				pagemanager_cache();
@@ -838,6 +853,11 @@ function pagemanager_admin()
 		$form_container->output_row($lang->pagemanager_edit_form_template.' <em>*</em>',$lang->pagemanager_edit_form_template_description,$form->generate_text_area('template',$form_array['template'], array('id' => 'template', 'style' => 'width: 100%; height: 500px;')), 'template');
 		$form_container->output_row($lang->pagemanager_edit_form_online,$lang->pagemanager_edit_form_online_description,$form->generate_yes_no_radio('online',$form_array['online']));
 		$form_container->output_row($lang->pagemanager_edit_form_enable,$lang->pagemanager_edit_form_enable_description,$form->generate_yes_no_radio('enabled',$form_array['enabled']));
+		
+		$form_container->output_row($lang->pagemanager_edit_form_url_prev_page,$lang->pagemanager_edit_form_url_prev_page_description,$form->generate_text_box('url_prev_page',$form_array['url_prev_page'],array('id'=>'url_prev_page')), 'url_prev_page');
+		$form_container->output_row($lang->pagemanager_edit_form_url_next_page,$lang->pagemanager_edit_form_url_next_page_description,$form->generate_text_box('url_next_page',$form_array['url_next_page'],array('id'=>'url_next_page')), 'url_next_page');
+		$form_container->output_row($lang->pagemanager_edit_form_url_toc_page,$lang->pagemanager_edit_form_url_toc_page_description,$form->generate_text_box('url_toc_page',$form_array['url_toc_page'],array('id'=>'url_toc_page')), 'url_toc_page');
+		
 		$form_container->end();
 		$buttons[] = $form->generate_submit_button($lang->pagemanager_edit_form_continue,array('name'=>'continue'));
 		$buttons[] = $form->generate_submit_button($lang->pagemanager_edit_form_close,array('name'=>'close'));
@@ -977,13 +997,17 @@ function pagemanager()
 	if($mybb->input['page'] && isset($pagecache[$mybb->input['page']]))
 	{
 		global $db;
+		
 		$query=$db->simple_select('pages','*','pid='.$pagecache[$mybb->input['page']]['pid']);
 		$pages=$db->fetch_array($query);
 		if($pages['groups'] == "-1" || is_member($pages['groups']))
 		{
 			if($pages['framework'])
 			{
-				global $headerinclude,$header,$theme,$footer;
+				global $headerinclude,$header,$theme,$footer,$lang;
+				
+				$lang->load("pagemanager");
+				
 				$template='<html>
 				<head>
 					<title>'.$pages['name'].' - '.$mybb->settings['bbname'].'</title>
@@ -991,11 +1015,85 @@ function pagemanager()
 				</head>
 				<body>
 					{$header}
+					<article style="font-size: 1.5em;">
+					{PageIndexing}
 					'.$pages['template'].'
+					</article>
+					{PageIndexing}
 					{$footer}
 				</body>
 				</html>';
-				$template=str_replace("\\'","'",addslashes($template));
+
+				// Check if we have data for  page indexing
+				if ( !empty($pages['url_next_page']) or !empty($pages['url_prev_page']) or !empty($pages['url_toc_page']) )
+				{
+				
+					$pageIndexerHTML = "<!-- Page Indexing --><table width='100%' style='margin-top: 2em; margin-bottom: 2em;'><tr><td width='25%' style='text-align: left;'>{UrlPreviousPage}</td><td width='50%' style='text-align: center;'>{UrlTocPage}</td><td width='25%' style='text-align: right;'>{UrlNextPage}</td></tr></table>";
+				
+					// Next Page content
+					$NextPageContent = "";
+				
+					// Do we have a next page ?
+					if ( !empty($pages['url_next_page']) )
+					{
+					
+						// Define the next page content
+						$NextPageContent = "<a href='misc.php?page=".$pages['url_next_page']."'>".$lang->pagemanager_pageindex_url_next_page_label."</a>";
+					
+					}
+					
+					// Replace the content
+					$pageIndexerHTML = str_replace("{UrlNextPage}",$NextPageContent,$pageIndexerHTML);
+					
+					
+					// Previous Page content
+					$PrevPageContent = "";
+				
+					// Do we have a next page ?
+					if ( !empty($pages['url_prev_page']) )
+					{
+					
+						// Define the next page content
+						$PrevPageContent = "<a href='misc.php?page=".$pages['url_prev_page']."'>".$lang->pagemanager_pageindex_url_prev_page_label."</a>";
+					
+					}
+					
+					// Replace the content
+					$pageIndexerHTML = str_replace("{UrlPreviousPage}",$PrevPageContent,$pageIndexerHTML);
+					
+					
+					
+					// Table Of Content content
+					$TocPageContent = "";
+				
+					// Do we have a toc page ?
+					if ( !empty($pages['url_toc_page']) )
+					{
+					
+						// Define the next page content
+						$TocPageContent = "<a href='misc.php?page=".$pages['url_toc_page']."'>".$lang->pagemanager_pageindex_url_toc_page_label."</a>";
+					
+					}
+					
+					// Replace the content
+					$pageIndexerHTML = str_replace("{UrlTocPage}",$TocPageContent,$pageIndexerHTML);
+					
+					
+					
+					
+					// Replace our keyword with our page indexing HTML
+					$template=str_replace("{PageIndexing}",$pageIndexerHTML,$template);
+				
+				}
+				else				
+				{
+				
+					// Replace our keyword with nothing
+					$template=str_replace("{PageIndexing}","",$template);				
+				
+				}
+				
+				$template=str_replace("\\'","'",addslashes($template));				
 				add_breadcrumb($pages['name']);
 				eval("\$page=\"".$template."\";");
 				output_page($page);
@@ -1088,7 +1186,10 @@ function pagemanager_setinput($input=false, $import=false)
 		'framework'	=>	0,
 		'template'	=>	'',
 		'online'	=>	1,
-		'enabled'	=>	1
+		'enabled'	=>	1,
+		'url_next_page' =>      '',
+		'url_prev_page' =>      '',
+		'url_toc_page'  =>      ''
 	);
 	if($input != false)
 	{
@@ -1133,6 +1234,20 @@ function pagemanager_setinput($input=false, $import=false)
 		{
 			$default['enabled'] = 0;
 		}
+		if($input['url_next_page'])
+		{
+			$default['url_next_page'] = trim(my_substr($input['url_next_page'],0,30));
+		}
+		if($input['url_prev_page'])
+		{
+			$default['url_prev_page'] = trim(my_substr($input['url_prev_page'],0,30));
+		}
+		if($input['url_toc_page'])
+		{
+			$default['url_toc_page'] = trim(my_substr($input['url_toc_page'],0,30));
+		}
+		
+		
 	}
 	return $default;
 }
